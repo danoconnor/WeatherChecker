@@ -1,0 +1,14 @@
+{
+  "name": "weather-checker",
+  "version": "0.0.0",
+  "description": "WeatherChecker",
+  "scripts": {
+    "start": "node server"
+  },
+  "engines": {
+    "node": "~6.10.x"
+  },
+  "author": {
+    "name": "dpo3y"
+  }
+}
