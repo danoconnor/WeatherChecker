@@ -1,8 +1,16 @@
-'use strict';
-var http = require('http');
-var port = process.env.PORT || 1337;
+var express = require('express');
 
-http.createServer(function (req, res) {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Weather Checker\n');
-}).listen(port);
+var port = process.env.PORT || 1337;
+var app = express();
+
+app.use(express.static('public'));
+app.use(express.static('src/views'));
+
+app.get("/", function (req, res) {
+    res.send('Hello  world');
+});
+
+app.listen(port, function (err) {
+    console.log('Server is running on port ' + port);
+});
+

@@ -1,0 +1,21 @@
+{
+  "name": "weather-checker",
+  "description": "WeatherChecker",
+  "main": "",
+  "authors": [
+    "[object Object]"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/danoconnor/WeatherChecker",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "AdminLTE": "admin-lte#^2.3.11"
+  }
+}
