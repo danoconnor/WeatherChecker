@@ -16,6 +16,15 @@
   ],
   "dependencies": {
     "bootstrap": "^3.3.7",
-    "AdminLTE": "admin-lte#^2.3.11"
+    "morris.js": "https://github.com/morrisjs/morris.js.git#^0.5.1"
+  },
+  "overrides": {
+    "bootstrap": {
+      "main": [
+        "less/bootstrap.less",
+        "dist/js/bootstrap.js",
+        "dist/css/bootstrap.css"
+      ]
+    }
   }
 }
