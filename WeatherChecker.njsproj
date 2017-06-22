@@ -29,6 +29,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="gulpfile.js" />
+    <Compile Include="public\js\weather-checker-main.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="public\lib\bootstrap\dist\js\bootstrap.js" />
     <Compile Include="public\lib\bootstrap\dist\js\bootstrap.min.js" />
     <Compile Include="public\lib\bootstrap\dist\js\npm.js" />
@@ -184,6 +187,9 @@
       <SubType>Code</SubType>
     </Content>
     <Content Include="bower.json" />
+    <Content Include="public\css\weather-checker-main.css">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="public\lib\bootstrap\.bower.json" />
     <Content Include="public\lib\bootstrap\bower.json" />
     <Content Include="public\lib\bootstrap\CHANGELOG.md" />
