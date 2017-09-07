@@ -397,6 +397,9 @@
     <Content Include="src\views\index.html">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="src\views\TestPage.pug">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config" />
     <Content Include="package.json" />
