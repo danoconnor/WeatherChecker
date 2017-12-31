@@ -35,24 +35,34 @@ namespace WeatherChecker_DataCollectionJob
                 builder.Password = PrivateConstants.DatabasePassword;
             #endif
 
+            WriteOutput($"Opening database connection with connection string: '{builder.ConnectionString}'");
             SqlConnection dbConnection = new SqlConnection(builder.ConnectionString);
             dbConnection.Open();
+            WriteOutput("Database connection successfully opened.");
 
             var host = new JobHost(config);
             host.Start();
 
+            WriteOutput("Beginning data collection task");
             Task dataTask = GetLatestDataAsync(dbConnection).ContinueWith(innerTask =>
             {
                 if (innerTask.IsFaulted)
                 {
-                    Debug.WriteLine($"GetLatestData failed with expection {innerTask.Exception}");
+                    WriteOutput($"GetLatestData failed with expection {innerTask.Exception}");
+                }
+                else
+                {
+                    WriteOutput($"GetLatestData completed successfully");
                 }
 
                 dbConnection.Close();
                 dbConnection.Dispose();
             });
 
+            WriteOutput("Waiting for data collection task");
             dataTask.Wait();
+            WriteOutput("Data collection task completed.");
+
             host.Stop();
         }
 
@@ -188,7 +198,7 @@ namespace WeatherChecker_DataCollectionJob
             }
             catch (Exception e)
             {
-                Debug.WriteLine($"Failed to insert weather data with error: \n\t{e}");
+                WriteOutput($"Failed to insert weather data for {targetDate.ToShortDateString()} ({numDaysBeforeTarget} days before) with error: \n\t{e}");
             }
         }
 
@@ -248,6 +258,17 @@ namespace WeatherChecker_DataCollectionJob
             float cloudCoverAverage = cloudCoverTotal / numMatchingHours;
 
             return new WeatherData(highTemp, lowTemp, precipitation, cloudCoverAverage, numPrecipHours, windSpeedAvg, windDirectionAvg, windGustMax);
+        }
+
+        /// <summary>
+        /// Writes the specified message to both Debug and Console output.
+        /// Debug output is nice when testing local changes.
+        /// Console output will show up in the Azure logs for official runs.
+        /// </summary>
+        static void WriteOutput(string message)
+        {
+            Debug.WriteLine(message);
+            Console.WriteLine(message);
         }
     }
 }
