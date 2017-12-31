@@ -12,8 +12,6 @@ namespace WeatherChecker_DataCollectionJob
 {
     class Program
     {
-        // Please set the following connection strings in app.config for this WebJob to run:
-        // AzureWebJobsDashboard and AzureWebJobsStorage
         static void Main()
         {
             var config = new JobHostConfiguration();
@@ -26,15 +24,15 @@ namespace WeatherChecker_DataCollectionJob
             // Connect to database
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
-            builder.DataSource = Environment.GetEnvironmentVariable(Constants.Database.DatabaseConnectionEnvironmentVariable);
-            builder.InitialCatalog = Environment.GetEnvironmentVariable(Constants.Database.DatabaseNameEnvironmentVariable);
+            builder.DataSource = PrivateConstants.DatabaseConnection;
+            builder.InitialCatalog = PrivateConstants.DatabaseName;
 
             #if DEBUG
                 // The local SQL server instance for testing is set up to use Windows Authentication
                 builder.IntegratedSecurity = true;
             #else
-                builder.UserID = Environment.GetEnvironmentVariable(Constants.Database.UserIDEnvironmentVariable);
-                builder.Password = Environment.GetEnvironmentVariable(Constants.Database.PasswordEnvironmentVariable);
+                builder.UserID = PrivateConstants.DatabaseUserId;
+                builder.Password = PrivateConstants.DatabasePassword;
             #endif
 
             SqlConnection dbConnection = new SqlConnection(builder.ConnectionString);

@@ -75,6 +75,7 @@
   <ItemGroup>
     <Compile Include="Constants.cs" />
     <Compile Include="DataModels.cs" />
+    <Compile Include="PrivateConstants.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Functions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

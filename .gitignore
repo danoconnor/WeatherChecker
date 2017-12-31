@@ -264,3 +264,4 @@ __pycache__/
 *.pubxml
 /WeatherChecker_DataCollectionJob/Properties/webjob-publish-settings.json
 /WeatherChecker_DataCollectionJob/App.config
+/WeatherChecker_DataCollectionJob/PrivateConstants.cs
