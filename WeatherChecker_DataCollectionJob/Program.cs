@@ -24,46 +24,41 @@ namespace WeatherChecker_DataCollectionJob
             }
 
             // Connect to database
-            SqlConnection dbConnection = null;
-            try
-            {
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
-                builder.DataSource = Environment.GetEnvironmentVariable(Constants.Database.DatabaseConnectionEnvironmentVariable);
-                builder.InitialCatalog = Environment.GetEnvironmentVariable(Constants.Database.DatabaseNameEnvironmentVariable);
+            builder.DataSource = Environment.GetEnvironmentVariable(Constants.Database.DatabaseConnectionEnvironmentVariable);
+            builder.InitialCatalog = Environment.GetEnvironmentVariable(Constants.Database.DatabaseNameEnvironmentVariable);
 
-                #if DEBUG
-                    // The local SQL server instance for testing is set up to use Windows Authentication
-                    builder.IntegratedSecurity = true;
-                #else
-                    builder.UserID = Environment.GetEnvironmentVariable(Constants.Database.UserIDEnvironmentVariable);
-                    builder.Password = Environment.GetEnvironmentVariable(Constants.Database.PasswordEnvironmentVariable);
-                #endif
+            #if DEBUG
+                // The local SQL server instance for testing is set up to use Windows Authentication
+                builder.IntegratedSecurity = true;
+            #else
+                builder.UserID = Environment.GetEnvironmentVariable(Constants.Database.UserIDEnvironmentVariable);
+                builder.Password = Environment.GetEnvironmentVariable(Constants.Database.PasswordEnvironmentVariable);
+            #endif
 
-                dbConnection = new SqlConnection(builder.ConnectionString);
-                dbConnection.Open();
+            SqlConnection dbConnection = new SqlConnection(builder.ConnectionString);
+            dbConnection.Open();
 
-                var host = new JobHost(config);
-                // The following code ensures that the WebJob will be running continuously
-                //host.RunAndBlock();
-                GetLatestData(dbConnection).Wait();
-            }
-            catch (SqlException e)
+            var host = new JobHost(config);
+            host.Start();
+
+            Task dataTask = GetLatestDataAsync(dbConnection).ContinueWith(innerTask =>
             {
-                Debug.WriteLine($"Failed to connect to database with error: \n\t{e}");
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine($"Caught expection: \n\t{e}");
-            }
-            finally
-            {
-                dbConnection?.Close();
-                dbConnection?.Dispose();
-            }
+                if (innerTask.IsFaulted)
+                {
+                    Debug.WriteLine($"GetLatestData failed with expection {innerTask.Exception}");
+                }
+
+                dbConnection.Close();
+                dbConnection.Dispose();
+            });
+
+            dataTask.Wait();
+            host.Stop();
         }
 
-        static async Task GetLatestData(SqlConnection dbConnection)
+        static Task GetLatestDataAsync(SqlConnection dbConnection)
         {
             List<Task> locationTasks = new List<Task>();
             foreach (Location location in Constants.AccuWeather.Locations)
@@ -71,7 +66,7 @@ namespace WeatherChecker_DataCollectionJob
                 locationTasks.Add(GetLocationData(location, dbConnection));
             }
 
-            await Task.WhenAll(locationTasks);
+            return Task.WhenAll(locationTasks);
         }
 
         static Task GetLocationData(Location location, SqlConnection dbConnection)

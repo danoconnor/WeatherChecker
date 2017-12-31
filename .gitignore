@@ -261,3 +261,6 @@ __pycache__/
 *.pyc
 /bower_components
 /public/lib
+*.pubxml
+/WeatherChecker_DataCollectionJob/Properties/webjob-publish-settings.json
+/WeatherChecker_DataCollectionJob/App.config
