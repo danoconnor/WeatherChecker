@@ -21,30 +21,11 @@ namespace WeatherChecker_DataCollectionJob
                 config.UseDevelopmentSettings();
             }
 
-            // Connect to database
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-
-            builder.DataSource = PrivateConstants.DatabaseConnection;
-            builder.InitialCatalog = PrivateConstants.DatabaseName;
-
-            #if DEBUG
-                // The local SQL server instance for testing is set up to use Windows Authentication
-                builder.IntegratedSecurity = true;
-            #else
-                builder.UserID = PrivateConstants.DatabaseUserId;
-                builder.Password = PrivateConstants.DatabasePassword;
-            #endif
-
-            WriteOutput($"Opening database connection with connection string: '{builder.ConnectionString}'");
-            SqlConnection dbConnection = new SqlConnection(builder.ConnectionString);
-            dbConnection.Open();
-            WriteOutput("Database connection successfully opened.");
-
             var host = new JobHost(config);
             host.Start();
 
             WriteOutput("Beginning data collection task");
-            Task dataTask = GetLatestDataAsync(dbConnection).ContinueWith(innerTask =>
+            Task dataTask = GetLatestDataAsync().ContinueWith(innerTask =>
             {
                 if (innerTask.IsFaulted)
                 {
@@ -54,9 +35,6 @@ namespace WeatherChecker_DataCollectionJob
                 {
                     WriteOutput($"GetLatestData completed successfully");
                 }
-
-                dbConnection.Close();
-                dbConnection.Dispose();
             });
 
             WriteOutput("Waiting for data collection task");
@@ -66,27 +44,27 @@ namespace WeatherChecker_DataCollectionJob
             host.Stop();
         }
 
-        static Task GetLatestDataAsync(SqlConnection dbConnection)
+        static Task GetLatestDataAsync()
         {
             List<Task> locationTasks = new List<Task>();
             foreach (Location location in Constants.AccuWeather.Locations)
             {
-                locationTasks.Add(GetLocationData(location, dbConnection));
+                locationTasks.Add(GetLocationData(location));
             }
 
             return Task.WhenAll(locationTasks);
         }
 
-        static Task GetLocationData(Location location, SqlConnection dbConnection)
+        static Task GetLocationData(Location location)
         {
             return Task.WhenAll(new List<Task>()
             {
-                GetPast24HrData(location, dbConnection),
-                GetFiveDayForecastData(location, dbConnection)
+                GetPast24HrData(location),
+                GetFiveDayForecastData(location)
             });
         }
 
-        static async Task GetPast24HrData(Location location, SqlConnection dbConnection)
+        static async Task GetPast24HrData(Location location)
         {
             string currentConditionsUrl = string.Format(Constants.AccuWeather.CurrentConditionsURLFormat, location.AccuWeatherLocationKey, PrivateConstants.AccuWeatherAPIKey);
             Task<WebResponse> currentConditionsResponseTask = WebRequest.CreateHttp(currentConditionsUrl).GetResponseAsync();
@@ -105,20 +83,27 @@ namespace WeatherChecker_DataCollectionJob
 
                 WeatherData daytimeData = GetWeatherData(observations, true, highTemp, lowTemp);
                 WeatherData nighttimeData = GetWeatherData(observations, false, highTemp, lowTemp);
-                
+
                 // Setting DaysBefore = -1 indicates that this is the actual observation data for the target date
-                InsertWeatherData(dbConnection, location.ZipCode, NormalizeDate(DateTime.Now), -1, daytimeData, nighttimeData);
+                using (SqlConnection dbConnection = new SqlConnection(GetDatabaseConnectionString()))
+                {
+                    dbConnection.Open();
+                    InsertWeatherData(dbConnection, location.ZipCode, NormalizeDate(DateTime.Now), -1, daytimeData, nighttimeData);
+                }
             }
         }
 
-        static async Task GetFiveDayForecastData(Location location, SqlConnection dbConnection)
+        static async Task GetFiveDayForecastData(Location location)
         {
             string forecastUrl = string.Format(Constants.AccuWeather.FiveDayForecastURLFormat, location.AccuWeatherLocationKey, PrivateConstants.AccuWeatherAPIKey);
             Task<WebResponse> forecastResponseTask = WebRequest.CreateHttp(forecastUrl).GetResponseAsync();
 
             WebResponse forecastResponse = await forecastResponseTask;
+            using (SqlConnection dbConnection = new SqlConnection(GetDatabaseConnectionString()))
             using (StreamReader stream = new StreamReader(forecastResponse.GetResponseStream()))
             {
+                dbConnection.Open();
+
                 string jsonText = stream.ReadToEnd();
                 FiveDayForecast fiveDayForecast = JsonConvert.DeserializeObject<FiveDayForecast>(jsonText);
 
@@ -265,6 +250,24 @@ namespace WeatherChecker_DataCollectionJob
         {
             Debug.WriteLine(message);
             Console.WriteLine(message);
+        }
+
+        static string GetDatabaseConnectionString()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            builder.DataSource = PrivateConstants.DatabaseConnection;
+            builder.InitialCatalog = PrivateConstants.DatabaseName;
+
+            #if DEBUG
+                // The local SQL server instance for testing is set up to use Windows Authentication
+                builder.IntegratedSecurity = true;
+            #else
+                builder.UserID = PrivateConstants.DatabaseUserId;
+                builder.Password = PrivateConstants.DatabasePassword;
+            #endif
+
+            return builder.ConnectionString;
         }
     }
 }
