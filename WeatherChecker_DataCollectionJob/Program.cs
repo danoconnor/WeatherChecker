@@ -88,9 +88,7 @@ namespace WeatherChecker_DataCollectionJob
 
         static async Task GetPast24HrData(Location location, SqlConnection dbConnection)
         {
-            string accuWeatherAPIKey = Environment.GetEnvironmentVariable(Constants.AccuWeather.APIKeyEnvironmentVariable);
-
-            string currentConditionsUrl = string.Format(Constants.AccuWeather.CurrentConditionsURLFormat, location.AccuWeatherLocationKey, accuWeatherAPIKey);
+            string currentConditionsUrl = string.Format(Constants.AccuWeather.CurrentConditionsURLFormat, location.AccuWeatherLocationKey, PrivateConstants.AccuWeatherAPIKey);
             Task<WebResponse> currentConditionsResponseTask = WebRequest.CreateHttp(currentConditionsUrl).GetResponseAsync();
 
             WebResponse currentConditionsResponse = await currentConditionsResponseTask;
@@ -115,9 +113,7 @@ namespace WeatherChecker_DataCollectionJob
 
         static async Task GetFiveDayForecastData(Location location, SqlConnection dbConnection)
         {
-            string accuWeatherAPIKey = Environment.GetEnvironmentVariable(Constants.AccuWeather.APIKeyEnvironmentVariable);
-
-            string forecastUrl = string.Format(Constants.AccuWeather.FiveDayForecastURLFormat, location.AccuWeatherLocationKey, accuWeatherAPIKey);
+            string forecastUrl = string.Format(Constants.AccuWeather.FiveDayForecastURLFormat, location.AccuWeatherLocationKey, PrivateConstants.AccuWeatherAPIKey);
             Task<WebResponse> forecastResponseTask = WebRequest.CreateHttp(forecastUrl).GetResponseAsync();
 
             WebResponse forecastResponse = await forecastResponseTask;
