@@ -88,7 +88,11 @@ namespace WeatherChecker_DataCollectionJob
                 using (SqlConnection dbConnection = new SqlConnection(GetDatabaseConnectionString()))
                 {
                     dbConnection.Open();
-                    InsertWeatherData(dbConnection, location.ZipCode, NormalizeDate(DateTime.Now), -1, daytimeData, nighttimeData);
+
+                    // This data represents the actual result for the previous day
+                    DateTime yesterday = NormalizeDate(DateTime.Now).Subtract(new TimeSpan(1, 0, 0, 0));
+
+                    InsertWeatherData(dbConnection, location.ZipCode, yesterday, -1, daytimeData, nighttimeData);
                 }
             }
         }
@@ -138,8 +142,6 @@ namespace WeatherChecker_DataCollectionJob
         {
             try
             {
-                DateTime dataDate = NormalizeDate(DateTime.Now);
-
                 string queryStringFormat = "INSERT INTO dbo.WeatherData (zipCode, targetDate, daysBefore, high, low, precipitationAmount, avgCloudCover, hoursOfPrecipitation, windSpeed, windDirection, windGustSpeed, isDayTime) " +
                     "VALUES ({0}, '{1}', {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, '{11}')";
 
@@ -183,19 +185,12 @@ namespace WeatherChecker_DataCollectionJob
             }
         }
 
+        /// <summary>
+        /// Returns a date with just the year, month, and day of the given date parameter
+        /// </summary>
         static DateTime NormalizeDate(DateTime date)
         {
-            // The script will run around 5am, gathering data from the preceeding day.
-            // If the date is from the morning (before noon), we'll save the data as for the day before.
-            DateTime normalizedDate = new DateTime(date.Year, date.Month, date.Day);
-
-            if (date.Hour < 12)
-            {
-                // Subtract one day
-                normalizedDate = normalizedDate.Subtract(new TimeSpan(1, 0, 0, 0));
-            }
-
-            return normalizedDate;
+            return new DateTime(date.Year, date.Month, date.Day);
         }
 
         static WeatherData GetWeatherData(WeatherObservation[] observations, bool getDaytimeData, int highTemp, int lowTemp)
